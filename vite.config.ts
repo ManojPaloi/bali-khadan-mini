@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
 export default defineConfig(() => ({
-  base: "./", // ✅ ensures assets load correctly in production
+  base: "/",
   plugins: [react()],
   resolve: {
     alias: {
@@ -11,11 +11,14 @@ export default defineConfig(() => ({
     },
   },
   server: {
-    host: "0.0.0.0", // ✅ required for Render
-    port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
+    host: "0.0.0.0",
+    port:  3000, 
+  },
+  preview: {
+    host: "0.0.0.0",
+    port: 3000,
     allowedHosts: [
-      "bali-khadan-mini.onrender.com", // ✅ allow Render domain
+      "bali-khadan-mini.onrender.com",
     ],
   },
-  
 }));
