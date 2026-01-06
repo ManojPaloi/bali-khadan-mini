@@ -285,11 +285,12 @@ export const Form = () => {
 
             {/* Name & Phone Number */}
             <div className="grid gap-4 sm:grid-cols-2">
+
               <FloatingInput
-                label="Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                error={errors.name}
+                label="Car Number"
+                value={carNumber}
+                onChange={(e) => setCarNumber(e.target.value)}
+                error={errors.carNumber}
               />
               <FloatingInput
                 label="Phone Number"
@@ -309,21 +310,21 @@ export const Form = () => {
                 error={errors.vendor}
               /> */}
               <FloatingInput
+                label="Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                error={errors.name}
+              />
+              <FloatingInput
                 label="Location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 error={errors.location}
               />
-              <FloatingInput
-                label="Car Number"
-                value={carNumber}
-                onChange={(e) => setCarNumber(e.target.value)}
-                error={errors.carNumber}
-              />
+
 
             </div>
 
-            {/* Car Number */}
 
             {/* Wheels & CFT */}
             <div className="grid gap-4 sm:grid-cols-2">
