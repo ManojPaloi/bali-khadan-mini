@@ -184,7 +184,8 @@ export const Form = () => {
   });
 
   const nextSlNo = getNextSlNo(new Date().toISOString().split('T')[0]);
-
+  const dateTime = new Date().toISOString();
+  const slNo = getNextSlNo(dateTime);
   return (
     <Layout>
       <div className="mx-auto max-w-2xl">
@@ -210,7 +211,7 @@ export const Form = () => {
                 Serial No
               </p>
               <p className="text-2xl font-bold text-primary">
-                {nextSlNo}
+                {slNo}
               </p>
             </div>
             <div className="text-3xl font-extrabold text-primary/30">

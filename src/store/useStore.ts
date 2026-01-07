@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+/* =======================
+   Types
+======================= */
+
 export interface FormEntry {
   id: string;
   slNo: number;
@@ -29,13 +33,25 @@ interface AppState {
   user: User | null;
   entries: FormEntry[];
   theme: 'dark' | 'light';
+
   login: (username: string) => void;
   logout: () => void;
   addEntry: (entry: Omit<FormEntry, 'id' | 'slNo'>) => void;
   deleteEntry: (id: string) => void;
   toggleTheme: () => void;
-  getNextSlNo: (date: string) => number;
+  getNextSlNo: (dateTime: string) => number;
 }
+
+/* =======================
+   Helper (LOCAL DATE SAFE)
+======================= */
+
+const getDateKey = (dateTime: string) =>
+  new Date(dateTime).toLocaleDateString('en-CA'); // YYYY-MM-DD (local time)
+
+/* =======================
+   Store
+======================= */
 
 export const useStore = create<AppState>()(
   persist(
@@ -43,47 +59,61 @@ export const useStore = create<AppState>()(
       user: null,
       entries: [],
       theme: 'dark',
-      
-      login: (username: string) => {
+
+      /* ---------- Auth ---------- */
+
+      login: (username) => {
         set({ user: { username, isAuthenticated: true } });
       },
-      
+
       logout: () => {
         set({ user: null });
       },
-      
+
+      /* ---------- Entries ---------- */
+
       addEntry: (entry) => {
         const state = get();
-        const dateKey = entry.dateTime.split('T')[0];
-        const slNo = state.getNextSlNo(dateKey);
-        
+        const dateKey = getDateKey(entry.dateTime);
+        const slNo = state.getNextSlNo(entry.dateTime);
+
         const newEntry: FormEntry = {
           ...entry,
           id: crypto.randomUUID(),
           slNo,
         };
-        
+
         set({ entries: [...state.entries, newEntry] });
       },
-      
-      deleteEntry: (id: string) => {
+
+      deleteEntry: (id) => {
         set((state) => ({
           entries: state.entries.filter((e) => e.id !== id),
         }));
       },
-      
+
+      /* ---------- Theme ---------- */
+
       toggleTheme: () => {
         set((state) => ({
           theme: state.theme === 'dark' ? 'light' : 'dark',
         }));
       },
-      
-      getNextSlNo: (date: string) => {
+
+      /* ---------- Date-wise SL ---------- */
+
+      getNextSlNo: (dateTime: string) => {
         const state = get();
+        const dateKey = getDateKey(dateTime);
+
         const sameDateEntries = state.entries.filter(
-          (e) => e.dateTime.split('T')[0] === date
+          (e) => getDateKey(e.dateTime) === dateKey
         );
-        return sameDateEntries.length + 1;
+
+        if (sameDateEntries.length === 0) return 1;
+
+        const maxSlNo = Math.max(...sameDateEntries.map((e) => e.slNo));
+        return maxSlNo + 1;
       },
     }),
     {
