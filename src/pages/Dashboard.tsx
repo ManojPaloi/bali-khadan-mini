@@ -213,46 +213,68 @@ export const Dashboard = () => {
 
     return format(new Date(dateFilterMode), 'dd MMM yyyy');
   };
-  const exportPDF = async () => {
+  const exportPDF = () => {
     const doc = new jsPDF('p', 'mm', 'a4');
+
     const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 10;
 
     /* ================= HEADER ================= */
 
-    // Header band
-    doc.setFillColor(33, 37, 41); // dark professional
-    doc.rect(0, 0, pageWidth, 28, 'F');
+    doc.setFillColor(33, 37, 41); // dark header
+    doc.rect(0, 0, pageWidth, 30, 'F');
 
-    // Company Name
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
     doc.setTextColor(255);
-    doc.text(COMPANY.name, 14, 17);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(COMPANY.name, margin, 18);
 
-    // Title
-    doc.setFontSize(11);
-    doc.setTextColor(220);
-    doc.text('DAILY TRANSPORT SHEET', pageWidth - 14, 17, { align: 'right' });
-
-    /* ================= DATE BAR ================= */
-
-    doc.setFillColor(245, 246, 248);
-    doc.rect(0, 28, pageWidth, 10, 'F');
-
-    doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
-    doc.setTextColor(60);
-    doc.text(`Date : ${getPdfDateTitle()}`, 14, 35);
+    doc.setFont('helvetica', 'normal');
+    doc.text('DAILY TRANSPORT SHEET', pageWidth - margin, 14, { align: 'right' });
+    doc.text(`Date : ${getPdfDateTitle()}`, pageWidth - margin, 22, {
+      align: 'right',
+    });
+
+    doc.setTextColor(0);
 
     /* ================= TABLE ================= */
 
+    const tableData = filteredEntries.map((e) => [
+      e.slNo,
+      e.carNumber,
+      e.wheels,
+      e.cft,
+      `${e.cost}`,
+      e.cash ? `${e.cash}` : '-',
+      e.upi ? `${e.upi}` : '-',
+      e.trip === '2nd' ? '2nd Trip' : '1st Trip',
+      e.remark || '-',
+    ]);
+
+    // Totals
     const totalCash = filteredEntries.reduce((s, e) => s + e.cash, 0);
     const totalUpi = filteredEntries.reduce((s, e) => s + e.upi, 0);
     const totalCost = filteredEntries.reduce((s, e) => s + e.cost, 0);
 
+    tableData.push([
+      '',
+      'TOTAL',
+      '',
+      '',
+      `${totalCost}`,
+      `${totalCash}`,
+      `${totalUpi}`,
+      ``,
+      '',
+    ]);
+
     autoTable(doc, {
-      startY: 42,
+      startY: 36,
+      tableWidth: pageWidth - margin * 2,
+      margin: { left: margin, right: margin },
       theme: 'grid',
+
       head: [[
         'Sl',
         'Vehicle No',
@@ -261,87 +283,67 @@ export const Dashboard = () => {
         'Rate',
         'Cash',
         'P Pay',
+        'Trip',
         'Remarks',
       ]],
-      body: [
-        ...filteredEntries.map((e) => [
-          e.slNo,
-          e.carNumber,
-          e.wheels,
-          e.cft,
-          `₹${e.cost}`,
-          e.cash ? `₹${e.cash}` : '-',
-          e.upi ? `₹${e.upi}` : '-',
-          e.remark || '',
-        ]),
-        // ===== TOTAL ROW =====
-        [
-          '',
-          'TOTAL',
-          '',
-          '',
-          `₹${totalCost}`,
-          `₹${totalCash}`,
-          `₹${totalUpi}`,
-          '',
-        ],
-      ],
+
+      body: tableData,
+
       styles: {
         fontSize: 9,
         cellPadding: 3,
         valign: 'middle',
-        textColor: 30,
       },
+
       headStyles: {
-        fillColor: [230, 233, 237],
-        textColor: 20,
+        fillColor: [220, 220, 220],
+        textColor: 0,
         fontStyle: 'bold',
-        halign: 'center',
       },
-      columnStyles: {
-        0: { halign: 'center', cellWidth: 10 },
-        1: { cellWidth: 36 },
-        2: { halign: 'center', cellWidth: 14 },
-        3: { halign: 'center', cellWidth: 14 },
-        4: { halign: 'right', cellWidth: 20 },
-        5: { halign: 'right', cellWidth: 20 },
-        6: { halign: 'right', cellWidth: 20 },
-        7: { cellWidth: 30 },
-      },
-      didParseCell: (data) => {
-        const rowIndex = data.row.index;
+
+      didParseCell: function (data) {
+        const row = data.row.raw;
 
         // Highlight 2nd Trip rows
-        if (
-          data.section === 'body' &&
-          filteredEntries[rowIndex]?.trip === '2nd'
-        ) {
-          data.cell.styles.fillColor = [255, 245, 230]; // soft orange
-          data.cell.styles.fontStyle = 'bold';
+        if (row && row[7] === '2nd Trip' && data.section === 'body') {
+          data.cell.styles.fillColor = [255, 243, 205];
         }
 
         // TOTAL row styling
-        if (data.section === 'body' && rowIndex === filteredEntries.length) {
-          data.cell.styles.fillColor = [33, 37, 41];
-          data.cell.styles.textColor = 255;
+        if (row && row[1] === 'TOTAL') {
           data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.fillColor = [230, 230, 230];
         }
+      },
+
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 10 },
+        1: { cellWidth: 28 },
+        2: { cellWidth: 20 },
+        3: { halign: 'center', cellWidth: 18 },
+        4: { halign: 'center', cellWidth: 18 },
+        5: { halign: 'right', cellWidth: 20 },
+        6: { halign: 'right', cellWidth: 18 },
+        7: { halign: 'right', cellWidth: 18 },
+        8: { cellWidth: 25 },
       },
     });
 
     /* ================= FOOTER ================= */
-
-    doc.setFontSize(8);
-    doc.setTextColor(120);
-    doc.text(
-      'Generated by Transport Management System',
-      pageWidth / 2,
-      290,
-      { align: 'center' }
-    );
-
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.text(
+        `Page ${i} of ${pageCount}`,
+        pageWidth / 2,
+        doc.internal.pageSize.getHeight() - 10,
+        { align: 'center' }
+      );
+    }
     doc.save(`daily-sheet-${getPdfDateTitle().replace(/ /g, '-')}.pdf`);
   };
+
 
 
 
