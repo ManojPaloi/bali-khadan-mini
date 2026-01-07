@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { generateGhatSlipPDF } from '@/utils/generateGhatSlipPDF';
 
 const policeStations = [
   "Beliabera PS",
@@ -141,6 +142,24 @@ export const Form = () => {
       trip,
       policeStations: trip === '2nd' ? selectedStations : undefined,
     });
+   generateGhatSlipPDF(
+  {
+    slNo,
+    dateTime,
+    carNumber,
+    name,
+    phoneNumber,
+    location,
+    wheels: Number(wheels),
+    cft: Number(cft),
+    cost: costNum,
+    cash: finalCash,
+    upi: finalUpi,
+    remark,
+  },
+  2 // 👈 PRINT 2 COPIES
+);
+
 
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2000);
@@ -246,44 +265,7 @@ export const Form = () => {
               </div>
             </div>
 
-            {/* Police stations (2nd trip only) */}
-            <AnimatePresence>
-              {trip === '2nd' && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <label className="mb-2 block text-sm text-muted-foreground">
-                    Police Stations <span className="text-xs">(Optional)</span>
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {policeStations.map((station) => (
-                      <motion.button
-                        key={station}
-                        type="button"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => toggleStation(station)}
-                        className={cn(
-                          'rounded-lg border px-3 py-1.5 text-xs font-medium transition-all',
-                          selectedStations.includes(station)
-                            ? 'border-primary bg-primary text-primary-foreground'
-                            : 'border-border/50 bg-secondary/30 text-muted-foreground hover:bg-secondary/50'
-                        )}
-                      >
-                        {station}
-                        {selectedStations.includes(station) && (
-                          <X className="ml-1 inline h-3 w-3" />
-                        )}
-                      </motion.button>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
+            
             {/* Name & Phone Number */}
             <div className="grid gap-4 sm:grid-cols-2">
 
