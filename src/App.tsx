@@ -1,33 +1,31 @@
-import { useEffect } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useStore } from "@/store/useStore";
+
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Form from "./pages/Form";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
+import RequireAuth from "./routes/RequireAuth";
+import useBootstrapAuth from "./hooks/useBootstrapAuth";
+import { useSelector } from "react-redux";
+import { RootState } from "./store/store";
 
 const queryClient = new QueryClient();
 
-const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const { theme } = useStore();
+const App = () => {
+  // ✅ Call hook here at top-level, before return
+  useBootstrapAuth();
+ const isAuthenticated = useSelector(
+    (state: RootState) => state.auth.isAuthenticated
+  );
 
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
-  }, [theme]);
-
-  return <>{children}</>;
-};
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
+  console.log("isAuthenticated:", isAuthenticated);
+  return (
+    <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -35,14 +33,18 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/form" element={<Form />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+
+            <Route element={<RequireAuth />}>
+              <Route path="/form" element={<Form />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+            </Route>
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+    </QueryClientProvider>
+  );
+};
 
 export default App;
