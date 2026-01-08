@@ -63,6 +63,7 @@ export const Form = () => {
     }
   }, [cft, trip]);
 
+
   // Auto-fill cash/upi based on cost
   useEffect(() => {
     const costNum = parseFloat(cost) || 0;
@@ -93,17 +94,21 @@ export const Form = () => {
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!name.trim()) newErrors.name = 'Name is required';
     if (!phoneNumber.trim()) newErrors.phoneNumber = 'Phone number is required';
-    // if (!vendor.trim()) newErrors.vendor = 'Vendor is required';
-    if (!location.trim()) newErrors.location = 'Location is required';
     if (!carNumber.trim()) newErrors.carNumber = 'Car number is required';
     if (!wheels) newErrors.wheels = 'Select wheels count';
-    if (!cft || parseFloat(cft) <= 0) newErrors.cft = 'Valid CFT required';
+
+    // 🔹 Only required for 1st trip
+    if (trip === '1st') {
+      if (!name.trim()) newErrors.name = 'Name is required';
+      if (!location.trim()) newErrors.location = 'Location is required';
+      if (!cft || parseFloat(cft) <= 0) newErrors.cft = 'Valid CFT required';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,23 +147,23 @@ export const Form = () => {
       trip,
       policeStations: trip === '2nd' ? selectedStations : undefined,
     });
-   generateGhatSlipPDF(
-  {
-    slNo,
-    dateTime,
-    carNumber,
-    name,
-    phoneNumber,
-    location,
-    wheels: Number(wheels),
-    cft: Number(cft),
-    cost: costNum,
-    cash: finalCash,
-    upi: finalUpi,
-    remark,
-  },
-  2 // 👈 PRINT 2 COPIES
-);
+    generateGhatSlipPDF(
+      {
+        slNo,
+        dateTime,
+        carNumber,
+        name,
+        phoneNumber,
+        location,
+        wheels: Number(wheels),
+        cft: Number(cft),
+        cost: costNum,
+        cash: finalCash,
+        upi: finalUpi,
+        remark,
+      },
+      2 // 👈 PRINT 2 COPIES
+    );
 
 
     setShowSuccess(true);
@@ -265,7 +270,7 @@ export const Form = () => {
               </div>
             </div>
 
-            
+
             {/* Name & Phone Number */}
             <div className="grid gap-4 sm:grid-cols-2">
 

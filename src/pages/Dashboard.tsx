@@ -213,13 +213,10 @@ export const Dashboard = () => {
 
     return format(new Date(dateFilterMode), 'dd MMM yyyy');
   };
-  const exportPDF = () => {
-    const doc = new jsPDF('p', 'mm', 'a4');
 
+  const drawHeader = (doc: jsPDF) => {
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 10;
-
-    /* ================= HEADER ================= */
 
     doc.setFillColor(33, 37, 41); // dark header
     doc.rect(0, 0, pageWidth, 30, 'F');
@@ -231,14 +228,23 @@ export const Dashboard = () => {
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text('DAILY TRANSPORT SHEET', pageWidth - margin, 14, { align: 'right' });
+    doc.text('DAILY TRANSPORT SHEET', pageWidth - margin, 14, {
+      align: 'right',
+    });
     doc.text(`Date : ${getPdfDateTitle()}`, pageWidth - margin, 22, {
       align: 'right',
     });
 
     doc.setTextColor(0);
+  };
 
-    /* ================= TABLE ================= */
+  const exportPDF = () => {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 10;
+
+    // FIRST PAGE HEADER
+    drawHeader(doc);
 
     const tableData = filteredEntries.map((e) => [
       e.slNo,
@@ -252,7 +258,6 @@ export const Dashboard = () => {
       e.remark || '-',
     ]);
 
-    // Totals
     const totalCash = filteredEntries.reduce((s, e) => s + e.cash, 0);
     const totalUpi = filteredEntries.reduce((s, e) => s + e.upi, 0);
     const totalCost = filteredEntries.reduce((s, e) => s + e.cost, 0);
@@ -265,14 +270,14 @@ export const Dashboard = () => {
       `${totalCost}`,
       `${totalCash}`,
       `${totalUpi}`,
-      ``,
+      '',
       '',
     ]);
 
     autoTable(doc, {
-      startY: 36,
+      startY: 36, // ⬅ below header
       tableWidth: pageWidth - margin * 2,
-      margin: { left: margin, right: margin },
+      margin: { left: margin, right: margin, top: 36 },
       theme: 'grid',
 
       head: [[
@@ -282,7 +287,7 @@ export const Dashboard = () => {
         'CFT',
         'Rate',
         'Cash',
-        'P Pay',
+        'Upi',
         'Trip',
         'Remarks',
       ]],
@@ -301,19 +306,22 @@ export const Dashboard = () => {
         fontStyle: 'bold',
       },
 
-      didParseCell: function (data) {
+      didParseCell(data) {
         const row = data.row.raw;
 
-        // Highlight 2nd Trip rows
         if (row && row[7] === '2nd Trip' && data.section === 'body') {
           data.cell.styles.fillColor = [255, 243, 205];
         }
 
-        // TOTAL row styling
         if (row && row[1] === 'TOTAL') {
           data.cell.styles.fontStyle = 'bold';
           data.cell.styles.fillColor = [230, 230, 230];
         }
+      },
+
+      didDrawPage: () => {
+        // 🔥 THIS MAKES HEADER REPEAT ON EVERY PAGE
+        drawHeader(doc);
       },
 
       columnStyles: {
@@ -324,12 +332,12 @@ export const Dashboard = () => {
         4: { halign: 'center', cellWidth: 18 },
         5: { halign: 'right', cellWidth: 20 },
         6: { halign: 'right', cellWidth: 18 },
-        7: { halign: 'right', cellWidth: 18 },
+        7: { halign: 'center', cellWidth: 18 },
         8: { cellWidth: 25 },
       },
     });
 
-    /* ================= FOOTER ================= */
+    /* FOOTER */
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
@@ -341,8 +349,10 @@ export const Dashboard = () => {
         { align: 'center' }
       );
     }
+
     doc.save(`daily-sheet-${getPdfDateTitle().replace(/ /g, '-')}.pdf`);
   };
+
 
 
 
